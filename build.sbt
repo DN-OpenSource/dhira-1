@@ -10,6 +10,8 @@ lazy val root = (project in file("."))
       "edu.berkeley.cs" %% "chiseltest" % "0.6.2" % Test,
       "org.scalatest" %% "scalatest" % "3.2.18" % Test
     ),
+    // Chisel 3.6+ requires a Scala compiler plugin.
+    addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin_2.13.14" % "3.6.1"),
     testFrameworks += new TestFramework("org.scalatest.tools.Framework"),
     // ChiselTest can use Verilator via annotations when installed.
   )
