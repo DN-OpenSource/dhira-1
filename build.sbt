@@ -6,8 +6,8 @@ lazy val root = (project in file("."))
   .settings(
     name := "dhira-1",
     libraryDependencies ++= Seq(
-      "edu.berkeley.cs" %% "chisel3" % "6.6.0",
-      "edu.berkeley.cs" %% "chiseltest" % "6.0.0" % Test,
+      "edu.berkeley.cs" %% "chisel3" % "3.6.1",
+      "edu.berkeley.cs" %% "chiseltest" % "0.6.2" % Test,
       "org.scalatest" %% "scalatest" % "3.2.18" % Test
     ),
     testFrameworks += new TestFramework("org.scalatest.tools.Framework"),
