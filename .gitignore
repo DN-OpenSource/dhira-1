@@ -1,0 +1,18 @@
+# build
+out/
+project/target/
+target/
+
+# metals / idea
+.metals/
+.bloop/
+.idea/
+.vscode/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# verilator
+obj_dir/
