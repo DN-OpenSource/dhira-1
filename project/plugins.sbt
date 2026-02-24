@@ -1,1 +1,1 @@
-addSbtPlugin("edu.berkeley.cs" % "sbt-chisel" % "0.5.6")
+// No sbt plugins required for baseline Chisel + ChiselTest build.
