@@ -26,32 +26,28 @@ class MacUnit extends Module {
     val y = Output(SInt(32.W))
   })
 
-  // Stage 1: multiply (keep full precision, 32-bit)
-  val s1_valid = RegNext(io.validIn, init = false.B)
-  val s1_mul = Reg(SInt(32.W))
-  when(io.validIn) {
-    s1_mul := (io.a * io.b).asSInt
-  }
+  // Valid pipeline (explicit RegInit avoids backend init quirks)
+  val v1 = RegInit(false.B)
+  val v2 = RegInit(false.B)
+  val v3 = RegInit(false.B)
+  v1 := io.validIn
+  v2 := v1
+  v3 := v2
+  io.validOut := v3
+
+  // Stage 1: multiply + align acc
+  val s1_mul = RegInit(0.S(32.W))
+  val s1_acc = RegInit(0.S(32.W))
+  s1_mul := (io.a * io.b).asSInt
+  s1_acc := io.accIn
 
   // Stage 2: add
-  val s2_valid = RegNext(s1_valid, init = false.B)
-  val s2_add = Reg(SInt(32.W))
-  val s1_acc = Reg(SInt(32.W))
-  when(io.validIn) {
-    // align accIn with mul in pipeline
-    s1_acc := io.accIn
-  }
-  when(s1_valid) {
-    s2_add := (s1_mul + s1_acc).asSInt
-  }
+  val s2_add = RegInit(0.S(32.W))
+  s2_add := (s1_mul + s1_acc).asSInt
 
   // Stage 3: register output
-  val s3_valid = RegNext(s2_valid, init = false.B)
-  val s3_out = Reg(SInt(32.W))
-  when(s2_valid) {
-    s3_out := s2_add
-  }
+  val s3_out = RegInit(0.S(32.W))
+  s3_out := s2_add
 
-  io.validOut := s3_valid
   io.y := s3_out
 }

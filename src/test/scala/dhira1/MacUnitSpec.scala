@@ -76,6 +76,8 @@ class MacUnitSpec extends AnyFlatSpec with ChiselScalatestTester {
           if (want.isDefined) {
             c.io.validOut.expect(true.B)
             c.io.y.expect(want.get.S(32.W))
+          } else {
+            c.io.validOut.expect(false.B)
           }
         }
       }
