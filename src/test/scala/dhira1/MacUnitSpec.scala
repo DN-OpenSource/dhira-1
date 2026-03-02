@@ -37,7 +37,10 @@ class MacUnitSpec extends AnyFlatSpec with ChiselScalatestTester {
         c.io.b.poke(0.S)
         c.io.accIn.poke(0.S)
 
-        // prime exp with 3 bubbles
+        // settle after reset
+        c.clock.step(1)
+
+        // prime exp with 3 bubbles (pipeline latency)
         exp.enqueue(None)
         exp.enqueue(None)
         exp.enqueue(None)
@@ -56,14 +59,15 @@ class MacUnitSpec extends AnyFlatSpec with ChiselScalatestTester {
 
           exp.enqueue(Some(y))
 
-          // step and check previous cycle output
+          // step and check output for this cycle
           c.clock.step(1)
           val want = exp.dequeue()
-          if (want.isDefined) {
-            c.io.validOut.expect(true.B)
-            c.io.y.expect(want.get.S(32.W))
-          } else {
-            c.io.validOut.expect(false.B)
+          want match {
+            case Some(w) =>
+              c.io.validOut.expect(true.B)
+              c.io.y.expect(w.S(32.W))
+            case None =>
+              c.io.validOut.expect(false.B)
           }
         }
 
@@ -73,11 +77,12 @@ class MacUnitSpec extends AnyFlatSpec with ChiselScalatestTester {
           exp.enqueue(None)
           c.clock.step(1)
           val want = exp.dequeue()
-          if (want.isDefined) {
-            c.io.validOut.expect(true.B)
-            c.io.y.expect(want.get.S(32.W))
-          } else {
-            c.io.validOut.expect(false.B)
+          want match {
+            case Some(w) =>
+              c.io.validOut.expect(true.B)
+              c.io.y.expect(w.S(32.W))
+            case None =>
+              c.io.validOut.expect(false.B)
           }
         }
       }
@@ -97,12 +102,16 @@ class MacUnitSpec extends AnyFlatSpec with ChiselScalatestTester {
 
         // feed MAC with accIn=0 each time, and accumulate outputs in software after pipeline
         val exp = collection.mutable.Queue[Option[Int]]()
-        exp.enqueue(None); exp.enqueue(None); exp.enqueue(None)
 
         c.io.validIn.poke(false.B)
         c.io.a.poke(0.S)
         c.io.b.poke(0.S)
         c.io.accIn.poke(0.S)
+
+        // settle
+        c.clock.step(1)
+
+        exp.enqueue(None); exp.enqueue(None); exp.enqueue(None)
 
         var running: Long = 0
 
@@ -119,24 +128,30 @@ class MacUnitSpec extends AnyFlatSpec with ChiselScalatestTester {
 
           c.clock.step(1)
           val got = exp.dequeue()
-          if (got.isDefined) {
-            c.io.validOut.expect(true.B)
-            val term = c.io.y.peek().litValue.toLong
-            // convert unsigned litValue to signed 32
-            val signed = if ((term & (1L << 31)) != 0) (term - (1L << 32)) else term
-            running += signed
+          got match {
+            case Some(_) =>
+              c.io.validOut.expect(true.B)
+              val term = c.io.y.peek().litValue.toLong
+              val signed = if ((term & (1L << 31)) != 0) (term - (1L << 32)) else term
+              running += signed
+            case None =>
+              c.io.validOut.expect(false.B)
           }
         }
 
         c.io.validIn.poke(false.B)
-        for (_ <- 0 until 3) {
+        for (_ <- 0 until 6) {
+          exp.enqueue(None)
           c.clock.step(1)
           val got = exp.dequeue()
-          if (got.isDefined) {
-            c.io.validOut.expect(true.B)
-            val term = c.io.y.peek().litValue.toLong
-            val signed = if ((term & (1L << 31)) != 0) (term - (1L << 32)) else term
-            running += signed
+          got match {
+            case Some(_) =>
+              c.io.validOut.expect(true.B)
+              val term = c.io.y.peek().litValue.toLong
+              val signed = if ((term & (1L << 31)) != 0) (term - (1L << 32)) else term
+              running += signed
+            case None =>
+              c.io.validOut.expect(false.B)
           }
         }
 
